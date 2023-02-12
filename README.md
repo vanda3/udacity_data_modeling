@@ -1,4 +1,4 @@
-# PROJECT-1: Data Modelling with Postgres
+# PROJECT-1: Data Modeling with Postgres
 
 
 
