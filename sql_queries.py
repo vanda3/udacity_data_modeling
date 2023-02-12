@@ -10,7 +10,7 @@ time_table_drop = "DROP TABLE IF EXISTS time;"
 
 songplay_table_create = ("""
     CREATE TABLE IF NOT EXISTS songplays (
-        songplay_id SERIAL PRIMARY KEY NOT NULL, 
+        songplay_id SERIAL PRIMARY KEY, 
         start_time timestamp NOT NULL, 
         user_id int NOT NULL, 
         level varchar NULL, 
@@ -24,7 +24,7 @@ songplay_table_create = ("""
 
 user_table_create = ("""
     CREATE TABLE IF NOT EXISTS users (
-        user_id int PRIMARY KEY UNIQUE NOT NULL, 
+        user_id int PRIMARY KEY, 
         first_name varchar NULL,
         last_name varchar NULL,
         gender varchar NULL, 
@@ -34,7 +34,7 @@ user_table_create = ("""
 
 song_table_create = ("""
     CREATE TABLE IF NOT EXISTS songs (  
-        song_id varchar PRIMARY KEY UNIQUE NOT NULL,
+        song_id varchar PRIMARY KEY,
         title varchar NOT NULL,
         artist_id varchar NOT NULL,
         year int NULL,
@@ -44,7 +44,7 @@ song_table_create = ("""
 
 artist_table_create = ("""
     CREATE TABLE IF NOT EXISTS artists (
-        artist_id varchar PRIMARY KEY UNIQUE NOT NULL, 
+        artist_id varchar PRIMARY KEY, 
         name varchar NOT NULL,
         location varchar NULL ,
         latitude double precision NULL, 
@@ -54,7 +54,7 @@ artist_table_create = ("""
 
 time_table_create = ("""
     CREATE TABLE IF NOT EXISTS time (
-        start_time timestamp NOT NULL, 
+        start_time timestamp PRIMARY KEY, 
         hour int NULL,
         day int NULL,
         week int NULL,
@@ -121,11 +121,11 @@ INSERT INTO time (
         month, 
         year,
         weekday
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s)""")
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (start_time) DO NOTHING""")
 
 
 
-# FIND SONGS
 # find the song ID and artist ID based on the title, artist name, and duration of a song.
 song_select = ("""
 SELECT songs.song_id, artists.artist_id
@@ -136,8 +136,13 @@ SELECT songs.song_id, artists.artist_id
                     artists.name LIKE %s AND
                     songs.duration = %s;
 """)
-# QUERY LISTS
 
-create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]
+
+# QUERY LISTS
+"""
+    NOTE: creation order matters for foreigner keys
+"""
+create_table_queries = [user_table_create, artist_table_create, song_table_create, time_table_create, songplay_table_create]
 drop_table_queries = [songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
+
 import psycopg2

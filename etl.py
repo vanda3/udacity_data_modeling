@@ -4,8 +4,17 @@ import psycopg2
 import pandas as pd
 from sql_queries import *
 
+    
 
 def process_song_file(cur, filepath):
+    '''
+        IN 
+            * cur:          db reference
+            * filepath:     song_data file being processed
+        OUT
+            * inserted data in songs table
+            * inserted data artists table
+    '''
     # open song file
     df = pd.DataFrame(pd.read_json(filepath, lines=True, orient='columns'))
 
@@ -21,9 +30,17 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    '''
+        IN 
+            * cur:          db reference
+            * filepath:     log_data file being processed
+        OUT
+            * inserted data in time table
+            * inserted data in users table
+            * inserted data in songplays table
+    '''
     # open log file
     df = pd.DataFrame(pd.read_json(filepath, lines=True, orient='columns'))
-
 
     # filter by NextSong action
     df = df[df['page'] == "NextSong"].reset_index()
@@ -32,14 +49,17 @@ def process_log_file(cur, filepath):
     t = df['ts'].drop_duplicates()
     t = pd.Series(sorted(pd.to_datetime(t,unit='ms')))
     
-    # insert time data records
+    # conver
     time_data = [t.dt.strftime('%Y-%m-%d %H:%M:%S'), t.dt.hour.tolist(), t.dt.day.tolist(), t.dt.weekofyear.tolist(), t.dt.month.tolist(), t.dt.year, t.dt.weekday.tolist()]
     column_labels = ['timestamp', 'hour', 'day', 'week of year', 'month', 'year', 'weekday']    
+    
+    # combine time_data and column_labels in a dictionary
     tmp_dict = dict()
     for n in range(len(column_labels)):
         tmp_dict[column_labels[n]] = time_data[n]
     time_df = pd.DataFrame(tmp_dict)
 
+    # insert time data record
     for i, row in time_df.iterrows():
         cur.execute(time_table_insert, list(row))
 
@@ -71,6 +91,16 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    '''
+        IN 
+            * cur:          db reference
+            * conn:         db parameters (host, dbname, user, password)
+            * filepath:     log_data file being processed
+            * func:         function called (process_log_file or process_song_file)
+        OUT
+            * processed all data files
+            * inserted all data into tables
+    '''
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -87,8 +117,7 @@ def process_data(cur, conn, filepath, func):
         func(cur, datafile)
         conn.commit()
         print('{}/{} files processed.'.format(i, num_files))
-
-
+    
 def main():
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()

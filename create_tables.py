@@ -1,5 +1,7 @@
 import psycopg2
 from sql_queries import create_table_queries, drop_table_queries
+from sqlalchemy_schemadisplay import create_schema_graph
+from sqlalchemy import MetaData
 
 
 def create_database():
@@ -66,5 +68,27 @@ def main():
     conn.close()
 
 
+def generate_schema():
+    """
+        Auto generates start schema png.
+        NOTE: foreigner keys were giving problems due to empty data, removed. E.g. for songplays:
+            CONSTRAINT fk1 
+                FOREIGN KEY(start_time) 
+                    REFERENCES time(start_time),
+            CONSTRAINT fk2 
+                FOREIGN KEY(user_id) 
+                    REFERENCES users(user_id),
+            CONSTRAINT fk3 
+                FOREIGN KEY(song_id) 
+                    REFERENCES songs(song_id),
+            CONSTRAINT fk4 
+                FOREIGN KEY(artist_id) 
+                    REFERENCES artists(artist_id)
+    """
+    graph = create_schema_graph(metadata=MetaData('postgresql://student:student@127.0.0.1/sparkifydb'))
+    graph.write_png('generated_star_diagram.png')
+    
+    
 if __name__ == "__main__":
     main()
+    generate_schema()
